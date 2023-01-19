@@ -11,7 +11,7 @@ dotenv.config();
 app.use(cors());
 app.use(express.json());
 
-const mongoClient = new MongoClient(process.env.MONGO_URI);
+const mongoClient = new MongoClient(process.env.DATABASE_URL);
 let db;
 
 try {
@@ -21,18 +21,18 @@ console.log("Erro no mongo.conect", err.message);
 }
 
 db = mongoClient.db();
-const talCollection = db.collection("COLLECTIONNNNN");
+const users = db.collection("users"); //cria a coleção users
 
 const loginValidation = Joi.object({
-    email: Joi.string().required().email({ tlds: { allow: false } }),
-    password: Joi.string().required()
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
   });
 
 const signUpValidation = Joi.object({
     email: Joi.string().required().email(),
     password: Joi.string().required(),
     name: Joi.string().required(),
-    password: Joi.any().valid(Joi.ref('password')).required()
+    passwordConfirmation: Joi.string().valid(Joi.ref("password")).required()
   });
 
 
@@ -42,9 +42,45 @@ const signUpValidation = Joi.object({
 
 app.post('/login', async (req, res) => {
   const user = req.body
+  const validate = loginValidation.validate(user, { abortEarly: true })
+
+  if (validate.error){
+    res.status(422).send(validate.error.details);
+    return;
+  }
+  try{
+    uservalidation = await db.collection('users').findOne(user);
+    if (!uservalidation || user.password!==uservalidation.password){
+        res.status(422).send('email ou senha incorretos');
+        return;
+    }else{
+        res.status(200).send();
+        return;
+    }
+  }catch(err){
+    res.send(err)
+  }
 })
 
-app.post('/cadastro', async (req, res) => {
+app.post('/signup', async (req, res) => {
+    const user = req.body;
+    const validate = signUpValidation.validate(user, { abortEarly: true });
+    if (validate.error) {
+        res.status(422).send(validate.error);
+        return;
+    }
+    try{
+        const signUpVerify = await db.collection('users').findOne({email: user.email})
+        if(signUpVerify){
+            res.status(409).send('Este email já foi cadastrado anteriormente')
+            return;
+        }  
+        await db.collection('users').insertOne(user);
+        res.status(201).send('Usuário cadastrado com sucesso')
+    }
+    catch(err){
+        console.log(err);
+    }
   })
 
 const port = 5000;
