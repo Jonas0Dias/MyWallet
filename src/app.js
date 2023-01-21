@@ -5,6 +5,7 @@ import cors from "cors";
 import Joi from "joi";
 import bcrypt from "bcrypt";
 import { v4 as uuidV4 } from 'uuid';
+import dayjs from "dayjs";
 
 const app = express();
 dotenv.config();
@@ -38,6 +39,7 @@ const signUpValidation = Joi.object({
 const newEntryOrExit = Joi.object({
     value: Joi.number().required(),
     description: Joi.string().required(),
+    type: Joi.string().valid("exit", "entry").required()
   });
 
 
@@ -46,21 +48,23 @@ const newEntryOrExit = Joi.object({
 // ROTAS:
 
 app.post('/login', async (req, res) => {
-    console.log('teste')
   const user = req.body
   const validate = loginValidation.validate(user, { abortEarly: true })
-
+  console.log(user)
+  
   if (validate.error){
     res.status(422).send(validate.error.details);
     return;
   }
   try{
-    uservalidation = await db.collection('users').findOne(user);
-    if (!uservalidation || user.password!==uservalidation.password){
+    const uservalidation = await db.collection('users').findOne({email: user.email});
+    console.log(uservalidation)
+    const match = await  bcrypt.compare(user.password, uservalidation.password)
+    if (!uservalidation || !match){
         res.status(422).send('email ou senha incorretos');
         return;
     }else{
-        res.status(200).send();
+        res.status(200).send({id : uservalidation._id, name: uservalidation.name});//precisa pegar o id la no front
         return;
     }
   }catch(err){
@@ -91,19 +95,23 @@ app.post('/signup', async (req, res) => {
   })
 
 app.get('/home',async(req,res) => {
-    const expensesList = await db.collection("expenses").find().toArray()
+    console.log(typeof( req.headers.id))
+    const expensesList = await db.collection("EntryOrExit").find({userID: req.headers.id}).toArray()
+    console.log(expensesList)
     res.send(expensesList)
 })
 
-app.post('/newentry',async(req,res) => {
-    const entry = req.body; //espero q o expenses seja um objeto com valor, descrição e data no formato DD/MM
-    const validate = newEntryOrExit.validate(entry, { abortEarly: true });
+app.post('/newentryorexit',async(req,res) => {
+    const user = req.headers.id
+    const entryorexit = req.body; //espero q o expenses seja um objeto com valor, descrição e o usuário 
+    const date = dayjs().format("DD/MM");
+    const validate = newEntryOrExit.validate(entryorexit, { abortEarly: true });
     try{
         if (validate.error) {
             res.status(422).send(validate.error);
             return;
         }
-        await db.collection('entry').insertOne(entry);
+        await db.collection('EntryOrExit').insertOne({value: entryorexit.value, description: entryorexit.description, date: date, userID: user, type: entryorexit.type});
         res.status(201).send('Entrada cadastrada com sucesso!')
         }
     catch(err){
@@ -112,22 +120,7 @@ app.post('/newentry',async(req,res) => {
 }
 ) 
 
-app.post('/newexit',async(req,res) => {
-    const exit = req.body; //espero q o expenses seja um objeto com valor, descrição e data no formato DD/MM
-    const validate = newEntryOrExit.validate(entry, { abortEarly: true });
-    try{
-        if (validate.error) {
-            res.status(422).send(validate.error);
-            return;
-        }
-        await db.collection('exit').insertOne(exit);
-        res.status(201).send('Gasto cadastrado com sucesso!')
-        }
-    catch(err){
-        res.send(err)
-    }
-}
-) 
+
 
 
 const port = 5000;
