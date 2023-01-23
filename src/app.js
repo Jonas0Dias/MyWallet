@@ -22,5 +22,5 @@ app.post('/newentryorexit', postNewEntryOrExit);
 
 
 
-
-app.listen(process.env.port , () => console.log(`Server running in port: ${process.env.port}`));
+const port = 5000;
+app.listen(process.env.port , () => console.log(`Server running in port: ${port}`));
