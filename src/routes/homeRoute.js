@@ -5,4 +5,4 @@ import { getHome } from "./controllers/home.js";
 const homeRouter = Router()
 homeRouter.get('/home', getHome);
 
-export  homeRouter;
+export default homeRouter;
