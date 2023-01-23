@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { postNewEntryOrExit } from "./controllers/newentryorexit.js";
+import { postNewEntryOrExit } from "../controllers/newentryorexit.js";
 
 
 const newentryorexitRouter = Router()

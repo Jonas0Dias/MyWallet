@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { postSignUp } from "./controllers/signup.js";
+import { postSignUp } from "../controllers/signup.js";
 
 
 const signupRouter = Router()
