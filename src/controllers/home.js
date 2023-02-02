@@ -4,6 +4,5 @@ export async function getHome(req,res)
 {
     console.log(typeof( req.headers.id))
     const expensesList = await db.collection("EntryOrExit").find({userID: req.headers.id}).toArray()
-    console.log(expensesList)
     res.send(expensesList)
 }
