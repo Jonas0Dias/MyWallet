@@ -14,4 +14,4 @@ app.use([homeRouter, loginRouter, newentryorexitRouter, signupRouter, deleteRout
 
 
 
-app.listen(5002, () => console.log(`Server running in port: ${5002}`));
+app.listen(process.env.PORT, () => console.log(`Server running in port: ${process.env.PORT}`));
